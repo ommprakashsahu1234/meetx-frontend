@@ -1,0 +1,50 @@
+[
+  {
+    "question": "I can't see some posts on someone's profile. Why?",
+    "answer": "Some posts are only visible to their followers. Try following the user to see more posts."
+  },
+  {
+    "question": "The app crashes or goes blank after I inspect or zoom. What's wrong?",
+    "answer": "This can happen due to media loading issues. Refreshing the page usually solves it. We're working to fix this!"
+  },
+  {
+    "question": "Even after I deleted a post, people can still like or comment on it. Why?",
+    "answer": "This might be a short delay. Please refresh the page, and the post should disappear shortly."
+  },
+  {
+    "question": "Why don’t I see a verified tick on some users who should be verified?",
+    "answer": "They might not be officially verified yet. We're reviewing accounts regularly and update verifications manually."
+  },
+  {
+    "question": "What do the different notification colors mean?",
+    "answer": "Blue background means new notification. Dark background means you’ve already seen it."
+  },
+  {
+    "question": "Sometimes post views don’t increase even after watching. Why?",
+    "answer": "Post views count only when you interact or fully view a post. Make sure the post loads completely."
+  },
+  {
+    "question": "Why does the suggested user list scroll oddly or isn't centered?",
+    "answer": "It adjusts based on screen size. Try swiping sideways to explore all suggestions."
+  },
+  {
+    "question": "I tapped on 'likes' or 'comments' but nothing shows. Why?",
+    "answer": "Sometimes the post takes a second to load the details. Wait a moment or tap again to retry."
+  },
+  {
+    "question": "Why doesn’t the top menu close after I click a link?",
+    "answer": "That happens rarely. Try tapping outside the menu or refreshing the page if it stays open."
+  },
+  {
+    "question": "I can't find certain interests when updating my profile.",
+    "answer": "We are adding more interest options soon! Till then Keep Exploring."
+  },
+  {
+    "question": "Clicking 'Message' doesn’t take me to chat. What should I do?",
+    "answer": "Please ensure you're logged in and try again. You can also go to the inbox to start a chat manually."
+  },
+  {
+    "question": "Why are no suggested users showing up?",
+    "answer": "Suggestions depend on your interests and activity. Keep exploring, and suggestions will appear over time!"
+  }
+]
