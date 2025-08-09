@@ -41,8 +41,8 @@ function Login() {
 
     try {
       const res = await axios.post("/user/login", {
-        username: username.toLowerCase(), 
-        password, 
+        username: username.toLowerCase(),
+        password,
       });
       if (res.data.token) {
         localStorage.setItem("token", res.data.token);
@@ -71,63 +71,69 @@ function Login() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-gray-900 via-slate-900 to-gray-900 p-4">
+    <div className="flex items-center justify-center min-h-screen bg-[#172133] p-4 text-[#0bb]">
       <div className="w-full max-w-md">
-        <div className="bg-gray-800 border border-gray-700 rounded-3xl p-8 shadow-2xl backdrop-blur-md">
+        <div className="bg-[#1a2b46] border border-[#0bb] rounded-3xl p-8 shadow-subtleNeon backdrop-blur-md">
           <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent mb-2">
+            <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-[#0bb] to-[#14639d] bg-clip-text text-transparent mb-2">
               Welcome Back
             </h1>
-            <p className="text-gray-400 text-lg">Sign in to your account</p>
+            <p className="text-[#5599bb] text-base sm:text-lg">Sign in to your account</p>
           </div>
 
           <div className="space-y-6">
             <div className="relative group">
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className="block text-sm sm:text-base font-medium text-[#5599bb] mb-2">
                 Username
               </label>
               <div className="relative">
-                <User className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500 w-5 h-5 transition-colors duration-300 group-focus-within:text-cyan-400" />
+                <User className="absolute left-4 top-1/2 transform -translate-y-1/2 text-[#5599bb] w-5 h-5 sm:w-6 sm:h-6 transition-colors duration-300 group-focus-within:text-[#0bb]" />
                 <input
                   type="text"
                   placeholder="Enter your username"
-                  className="w-full pl-12 pr-4 py-4 bg-gray-700 border-2 border-gray-600 rounded-2xl text-gray-100 placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-4 focus:ring-cyan-500/20 transition-all duration-300 hover:border-gray-500"
+                  className="w-full pl-12 pr-4 py-4 bg-[#172133] border-2 border-[#0bb] rounded-2xl text-[#0bb] placeholder-[#0bb]/70 focus:outline-none focus:ring-4 focus:ring-[#0bb]/30 focus:border-[#0bb] transition-all duration-300 hover:border-[#0a4d74]"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                 />
               </div>
             </div>
+
             <div className="relative group">
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className="block text-sm sm:text-base font-medium text-[#5599bb] mb-2">
                 Password
               </label>
               <div className="relative">
-                <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500 w-5 h-5 transition-colors duration-300 group-focus-within:text-cyan-400" />
+                <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 text-[#5599bb] w-5 h-5 sm:w-6 sm:h-6 transition-colors duration-300 group-focus-within:text-[#0bb]" />
                 <input
                   type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
-                  className="w-full pl-12 pr-12 py-4 bg-gray-700 border-2 border-gray-600 rounded-2xl text-gray-100 placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-4 focus:ring-cyan-500/20 transition-all duration-300 hover:border-gray-500"
+                  className="w-full pl-12 pr-12 py-4 bg-[#172133] border-2 border-[#0bb] rounded-2xl text-[#0bb] placeholder-[#0bb]/70 focus:outline-none focus:ring-4 focus:ring-[#0bb]/30 focus:border-[#0bb] transition-all duration-300 hover:border-[#0a4d74]"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-cyan-400 transition-colors duration-300"
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-[#5599bb] hover:text-[#0bb] transition-colors duration-300"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
                 >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  {showPassword ? (
+                    <EyeOff className="w-5 h-5 sm:w-6 sm:h-6" />
+                  ) : (
+                    <Eye className="w-5 h-5 sm:w-6 sm:h-6" />
+                  )}
                 </button>
               </div>
             </div>
 
             <button
-              className="w-full py-4 bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-semibold rounded-2xl shadow-lg transition-all duration-300 hover:from-cyan-400 hover:to-blue-500 hover:shadow-xl hover:shadow-cyan-500/25 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+              className="w-full py-4 bg-gradient-to-r from-[#0bb] to-[#14639d] text-black font-semibold rounded-2xl shadow-neonBtn transition-transform duration-300 hover:from-[#099] hover:to-[#0a4d74] hover:shadow-neonBtn hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
               onClick={handleLogin}
               disabled={loading}
             >
               {loading ? (
                 <div className="flex items-center justify-center gap-3">
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <div className="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
                   <span>Signing in...</span>
                 </div>
               ) : (
@@ -138,17 +144,17 @@ function Login() {
 
           <div className="mt-8 text-center space-y-4">
             <div className="flex items-center gap-4">
-              <div className="flex-1 h-px bg-gray-600"></div>
-              <span className="text-gray-400 text-sm">or</span>
-              <div className="flex-1 h-px bg-gray-600"></div>
+              <div className="flex-1 h-px bg-[#0bb]/30"></div>
+              <span className="text-[#5599bb] text-sm sm:text-base">or</span>
+              <div className="flex-1 h-px bg-[#0bb]/30"></div>
             </div>
-            
+
             <div className="space-y-3">
-              <p className="text-gray-300">
+              <p className="text-[#5599bb] text-sm sm:text-base">
                 Not a user?{" "}
-                <Link 
-                  to="/register" 
-                  className="text-cyan-400 hover:text-cyan-300 font-semibold transition-colors duration-300 hover:underline"
+                <Link
+                  to="/register"
+                  className="text-[#0bb] hover:text-[#14639d] font-semibold transition-colors duration-300 hover:underline"
                 >
                   Register here
                 </Link>
@@ -161,21 +167,32 @@ function Login() {
       {toast && (
         <div className="fixed top-6 right-6 z-50 animate-in slide-in-from-top-2 duration-300">
           <div
-            className={`px-6 py-4 rounded-2xl shadow-2xl border backdrop-blur-md ${
-              toast.type === "success" 
-                ? "bg-green-800/90 border-green-600 text-green-100" 
-                : "bg-red-800/90 border-red-600 text-red-100"
+            className={`px-6 py-4 rounded-3xl shadow-neonBtn border backdrop-blur-md max-w-xs sm:max-w-sm ${
+              toast.type === "success"
+                ? "bg-green-900/90 border-green-700 text-green-200"
+                : "bg-red-900/90 border-red-700 text-red-200"
             }`}
           >
             <div className="flex items-center gap-3">
-              <div className={`w-2 h-2 rounded-full ${
-                toast.type === "success" ? "bg-green-400" : "bg-red-400"
-              } animate-pulse`}></div>
+              <div
+                className={`w-3 h-3 rounded-full ${
+                  toast.type === "success" ? "bg-green-400" : "bg-red-400"
+                } animate-pulse`}
+              ></div>
               <span className="font-medium">{toast.message}</span>
             </div>
           </div>
         </div>
       )}
+
+      <style>{`
+        .shadow-subtleNeon {
+          box-shadow: 0 0 3px #0bb6, 0 0 8px #0bb5a;
+        }
+        .shadow-neonBtn {
+          box-shadow: 0 0 4px #0bb8, 0 0 10px #0bb8a;
+        }
+      `}</style>
     </div>
   );
 }

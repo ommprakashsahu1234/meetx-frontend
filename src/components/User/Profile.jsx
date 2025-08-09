@@ -13,11 +13,9 @@ function Profile() {
   const [toast, setToast] = useState(null);
   const [userPosts, setUserPosts] = useState([]);
   const [selectedPost, setSelectedPost] = useState(null);
-  const [likesModalOpen, setLikesModalOpen] = useState(false);
   const [commentsModalOpen, setCommentsModalOpen] = useState(false);
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState("");
-  const [likesList, setLikesList] = useState([]);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editCaption, setEditCaption] = useState("");
   const [editVisibility, setEditVisibility] = useState("");
@@ -25,6 +23,10 @@ function Profile() {
 
   const commentInputRef = useRef();
   const navigate = useNavigate();
+
+  const neonStyle = {
+    filter: "drop-shadow(0 0 1.5px #099) drop-shadow(0 0 3px #099)",
+  };
 
   useEffect(() => {
     if (toast) {
@@ -49,7 +51,6 @@ function Profile() {
         const postsRes = await axios.get(
           `/post/self/${profileRes.data.user._id}`
         );
-
         const postsWithCounts = await Promise.all(
           postsRes.data.posts.map(async (post) => {
             const countRes = await axios.get(
@@ -81,30 +82,16 @@ function Profile() {
     }
   };
 
-  const handleOpenLikes = async (post) => {
-    try {
-      const res = await axios.get(`/post/${post._id}/likes`);
-      setSelectedPost(post);
-      setLikesList(res.data.likes || []);
-      setLikesModalOpen(true);
-    } catch (error) {
-      console.error("Failed to fetch likes:", error);
-    }
-  };
-
   const handleDeletePost = async (postId) => {
     if (!window.confirm("Are you sure you want to delete this post?")) return;
 
     try {
       await axios.delete(`/post/deletepost/${postId}`);
-
       setUserPosts((prev) => prev.filter((post) => post._id !== postId));
       if (selectedPost?._id === postId) {
         setSelectedPost(null);
-        setLikesModalOpen(false);
         setCommentsModalOpen(false);
       }
-
       showToast("success", "Post Deleted Successfully!");
     } catch (error) {
       console.error("Error deleting post:", error);
@@ -117,7 +104,7 @@ function Profile() {
 
   const handleOpenComments = async (post) => {
     try {
-      setSelectedPost(post);
+      setSelectedPost({ ...post });
       await fetchComments(post._id);
       setCommentsModalOpen(true);
     } catch (error) {
@@ -128,7 +115,7 @@ function Profile() {
   const handleAddComment = async () => {
     if (!newComment.trim()) return;
     try {
-      const res = await axios.post(`/post/${selectedPost._id}/comment`, {
+      await axios.post(`/post/${selectedPost._id}/comment`, {
         text: newComment.trim(),
       });
 
@@ -136,7 +123,6 @@ function Profile() {
         `/post/${selectedPost._id}/comments`
       );
       setComments(updatedComments.data.comments || []);
-
       const countRes = await axios.get(
         `/post/${selectedPost._id}/comments/count`
       );
@@ -152,7 +138,6 @@ function Profile() {
             : p
         )
       );
-
       setNewComment("");
       commentInputRef.current?.focus();
     } catch (error) {
@@ -160,213 +145,203 @@ function Profile() {
     }
   };
 
-  const handleLikeToggle = async (postId, liked) => {
-    try {
-      await axios.post(`/post/${postId}/${liked ? "unlike" : "like"}`);
-
-      const updatedPosts = userPosts.map((p) =>
-        p._id === postId
-          ? {
-              ...p,
-              likedByUser: !liked,
-              likes: liked
-                ? p.likes.filter((id) => id !== userData._id)
-                : [...p.likes, userData._id],
-            }
-          : p
-      );
-      setUserPosts(updatedPosts);
-
-      if (selectedPost && selectedPost._id === postId) {
-        const updatedSelected = {
-          ...selectedPost,
-          likedByUser: !liked,
-          likes: liked
-            ? selectedPost.likes.filter((id) => id !== userData._id)
-            : [...selectedPost.likes, userData._id],
-        };
-        setSelectedPost(updatedSelected);
-      }
-    } catch (e) {
-      console.error("Like toggle failed:", e);
-    }
-  };
-
   const disableRightClick = (e) => e.preventDefault();
 
+  const handleOpenPostModal = (post) => {
+    setSelectedPost({ ...post });
+    setCommentsModalOpen(false);
+    setEditModalOpen(false);
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900">
-      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 lg:py-8">
+    <div className="min-h-screen bg-[#172133] p-4 text-[#0bb]">
+      <div className="max-w-7xl mx-auto">
         {!userData ? (
           <div className="flex items-center justify-center min-h-[60vh]">
             <div className="flex flex-col items-center space-y-4">
-              <div className="animate-spin rounded-full h-8 w-8 sm:h-12 sm:w-12 border-b-2 border-blue-400"></div>
-              <p className="text-gray-300 text-sm sm:text-lg">Loading your profile...</p>
+              <div className="animate-spin rounded-full h-8 w-8 sm:h-12 sm:w-12 border-t-2 border-cyan-400 border-t-transparent"></div>
+              <p className="text-[#5599bb] text-sm sm:text-lg">
+                Loading your profile...
+              </p>
             </div>
           </div>
         ) : (
           <>
-            {/* Enhanced Profile Header */}
-            <div className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-lg rounded-3xl p-4 sm:p-6 lg:p-8 mb-6 sm:mb-8 shadow-2xl border border-white/10">
-              <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6 lg:gap-8">
-                {/* Profile Image Section */}
-                <div className="relative group flex-shrink-0">
-                  <div className="relative">
+            {/* Profile Header */}
+            <div
+              className="
+  bg-[#1a2b46] rounded-3xl p-4 sm:p-6 mb-6 
+  border border-[#1f2a47] shadow-subtleNeon 
+  backdrop-blur-md 
+  flex flex-col sm:flex-row 
+  items-center sm:items-start gap-6 sm:gap-8
+"
+            >
+              {/* Profile Image Section */}
+              <div className="relative group flex-shrink-0">
+                <img
+                  src={userData.profileImageURL || defaultAvatar}
+                  alt="Profile"
+                  className="w-20 h-20 sm:w-24 sm:h-24 md:w-32 md:h-32 lg:w-40 lg:h-40 rounded-full object-cover border-4 border-[#0bb] shadow-neonBtn group-hover:scale-105 transition-transform duration-300"
+                  draggable={false}
+                />
+                <div className="absolute bottom-1 right-1 bg-green-500 border-2 border-[#172133] rounded-full w-4 h-4 md:w-5 md:h-5"></div>
+                <button
+                  onClick={() => navigate("/account")}
+                  className="absolute -bottom-2 -right-2 bg-gradient-to-r from-[#0bb] to-[#14639d] hover:from-[#099] hover:to-[#0a4d74] text-white rounded-full p-2 sm:p-3 shadow-neonBtn transition-transform duration-200 transform hover:scale-110"
+                  aria-label="Edit profile"
+                >
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                    />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Profile Info Section */}
+              <div className="flex-1 text-center sm:text-left space-y-3 sm:space-y-4 w-full">
+                {/* Username + Verify */}
+                <div className="flex flex-wrap items-center gap-2 sm:gap-3 justify-center sm:justify-start">
+                  <h1 className="text-[#0bb] text-2xl sm:text-3xl md:text-4xl font-bold break-words">
+                    {userData.username}
+                  </h1>
+                  {userData.isVerified && (
                     <img
-                      src={userData.profileImageURL || defaultAvatar}
-                      alt="Profile"
-                      className="w-20 h-20 sm:w-24 sm:h-24 md:w-32 md:h-32 lg:w-40 lg:h-40 rounded-full object-cover border-4 border-blue-400 shadow-xl group-hover:scale-105 transition-all duration-300"
+                      src={verifiedIcon}
+                      alt="Verified"
+                      className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7"
                       draggable={false}
                     />
-                    <div className="absolute inset-0 rounded-full bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                  </div>
-                  
-                  {/* Edit Profile Button */}
-                  <button
-                    onClick={() => navigate("/account")}
-                    className="absolute -bottom-2 -right-2 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white rounded-full p-2 sm:p-3 shadow-lg transition-all duration-200 transform hover:scale-110 group"
-                  >
-                    <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
-                    <div className="absolute bottom-full right-0 mb-2 px-2 py-1 bg-black/80 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none">
-                      <span className="hidden sm:inline">Edit Profile</span>
-                      <span className="sm:hidden">Edit</span>
-                    </div>
-                  </button>
-                </div>
-                
-                {/* Profile Info Section */}
-                <div className="flex-1 text-center sm:text-left space-y-3 sm:space-y-4 w-full">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-center sm:justify-start gap-2 sm:gap-3">
-                    <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-white break-words">
-                      {userData.username}
-                    </h1>
-                    {userData.isVerified && (
-                      <img
-                        src={verifiedIcon}
-                        alt="Verified"
-                        className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 lg:w-7 lg:h-7 mx-auto sm:mx-0"
-                        draggable={false}
-                      />
-                    )}
-                  </div>
-                  
-                  <p className="text-blue-300 text-base sm:text-lg md:text-xl font-medium break-words">
-                    {userData.name}
-                  </p>
-                  
-                  {userData.bio && (
-                    <div className="bg-white/5 rounded-xl p-3 sm:p-4 backdrop-blur-sm border border-white/10">
-                      <p className="text-gray-200 text-sm sm:text-base leading-relaxed max-w-2xl break-words">
-                        {userData.bio}
-                      </p>
-                    </div>
                   )}
-                  
-                  {/* Stats Section */}
-                  <div className="flex justify-center sm:justify-start space-x-4 sm:space-x-6 md:space-x-8 mt-4 sm:mt-6">
-                    <div className="text-center bg-white/5 rounded-xl px-3 sm:px-4 py-2 sm:py-3 backdrop-blur-sm border border-white/10">
-                      <div className="text-lg sm:text-xl md:text-2xl font-bold text-white">
-                        {userData.followers?.length || 0}
-                      </div>
-                      <a 
-                        href={`/user/${userData.username}/followers`} 
-                        className="text-blue-300 hover:text-blue-200 transition-colors font-medium text-xs sm:text-sm block"
-                      >
-                        Followers
-                      </a>
+                </div>
+
+                {/* Name */}
+                <p className="text-[#5599bb] text-base sm:text-lg md:text-xl font-medium break-words">
+                  {userData.name}
+                </p>
+
+                {/* Bio */}
+                {userData.bio && (
+                  <div
+                    className="
+        bg-[#0bb]/10 rounded-xl p-3 sm:p-4 
+        border border-[#0bb]/30 
+        max-w-full sm:max-w-2xl mx-auto sm:mx-0
+      "
+                  >
+                    <p className="text-[#88bbdd] leading-relaxed text-sm sm:text-base">
+                      {userData.bio}
+                    </p>
+                  </div>
+                )}
+
+                {/* Stats Section — now responsive grid */}
+                <div
+                  className="
+      grid grid-cols-3 sm:flex 
+      sm:justify-start sm:space-x-6 
+      gap-3 sm:gap-0
+      mt-4 sm:mt-6 max-w-full sm:max-w-md mx-auto sm:mx-0
+    "
+                >
+                  <div className="text-center bg-[#0bb]/10 rounded-xl px-4 py-2 sm:px-6 sm:py-3 border border-[#0bb]/20">
+                    <div className="text-xl sm:text-2xl font-bold text-[#0bb]">
+                      {userData.followers?.length || 0}
                     </div>
-                    <div className="text-center bg-white/5 rounded-xl px-3 sm:px-4 py-2 sm:py-3 backdrop-blur-sm border border-white/10">
-                      <div className="text-lg sm:text-xl md:text-2xl font-bold text-white">
-                        {userData.following?.length || 0}
-                      </div>
-                      <a 
-                        href={`/user/${userData.username}/following`} 
-                        className="text-blue-300 hover:text-blue-200 transition-colors font-medium text-xs sm:text-sm block"
-                      >
-                        Following
-                      </a>
+                    <a
+                      href={`/user/${userData.username}/followers`}
+                      className="text-xs sm:text-sm text-[#0bb] hover:text-[#14639d] block font-semibold mt-1"
+                    >
+                      Followers
+                    </a>
+                  </div>
+
+                  <div className="text-center bg-[#0bb]/10 rounded-xl px-4 py-2 sm:px-6 sm:py-3 border border-[#0bb]/20">
+                    <div className="text-xl sm:text-2xl font-bold text-[#0bb]">
+                      {userData.following?.length || 0}
                     </div>
-                    <div className="text-center bg-white/5 rounded-xl px-3 sm:px-4 py-2 sm:py-3 backdrop-blur-sm border border-white/10">
-                      <div className="text-lg sm:text-xl md:text-2xl font-bold text-white">
-                        {userPosts.length}
-                      </div>
-                      <div className="text-gray-300 font-medium text-xs sm:text-sm">
-                        Posts
-                      </div>
+                    <a
+                      href={`/user/${userData.username}/following`}
+                      className="text-xs sm:text-sm text-[#0bb] hover:text-[#14639d] block font-semibold mt-1"
+                    >
+                      Following
+                    </a>
+                  </div>
+
+                  <div className="text-center bg-[#0bb]/10 rounded-xl px-4 py-2 sm:px-6 sm:py-3 border border-[#0bb]/20">
+                    <div className="text-xl sm:text-2xl font-bold text-[#0bb]">
+                      {userPosts.length}
+                    </div>
+                    <div className="text-xs sm:text-sm text-[#5599bb] font-semibold mt-1">
+                      Posts
                     </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Enhanced Posts Grid */}
-            <div className="mb-6 sm:mb-8">
-              <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-white mb-4 sm:mb-6 flex items-center gap-3">
-                <span className="w-1 h-6 sm:h-8 bg-blue-400 rounded-full"></span>
-                <span>Your Posts</span>
+            {/* User Posts Section */}
+            <div className="mb-8">
+              <h2 className="text-[#0bb] text-3xl font-semibold mb-6 flex items-center gap-3">
+                <span className="w-1 h-8 bg-[#0bb] rounded-full inline-block" />
+                Your Posts
               </h2>
-              
+
               {userPosts.length === 0 ? (
-                <div className="text-center py-12 sm:py-16 bg-white/5 backdrop-blur-sm rounded-3xl border border-white/10">
-                  <div className="text-4xl sm:text-6xl mb-4">📸</div>
-                  <p className="text-gray-300 text-lg sm:text-xl">No posts yet</p>
-                  <p className="text-gray-400 mt-2 text-sm sm:text-base">Share your first moment!</p>
+                <div className="text-center py-16 bg-[#0bb]/10 rounded-3xl max-w-xl mx-auto">
+                  <div className="text-7xl mb-6 select-none">📸</div>
+                  <p className="text-[#5599bb] text-lg">No posts yet</p>
+                  <p className="text-[#446688] mt-2 text-base">
+                    Share your first moment!
+                  </p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
                   {userPosts.map((post) => (
                     <div
                       key={post._id}
-                      className="group bg-white/10 backdrop-blur-lg rounded-2xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02] border border-white/10 hover:border-blue-400/50"
+                      className="group cursor-pointer rounded-3xl overflow-hidden bg-[#172133] border border-[#1f2a47] shadow-subtleNeon transition-transform duration-300 hover:scale-[1.02] hover:shadow-neonBtn"
+                      onClick={() => handleOpenPostModal(post)}
                     >
-                      <div
-                        className="relative cursor-pointer overflow-hidden"
-                        onClick={() =>
-                          setSelectedPost({
-                            ...post,
-                            likedByUser: post.likes.includes(userData._id),
-                          })
-                        }
-                      >
+                      <div className="relative overflow-hidden">
                         {post.media[0]?.type === "image" ? (
                           <img
                             src={post.media[0].url}
                             alt="Post"
                             onContextMenu={disableRightClick}
-                            className="w-full h-48 sm:h-56 md:h-64 object-cover group-hover:scale-110 transition-transform duration-500"
+                            className="w-full h-56 object-cover transition-transform duration-500 group-hover:scale-110"
                             draggable={false}
                           />
                         ) : (
                           <video
                             src={post.media[0].url}
-                            onContextMenu={disableRightClick}
-                            className="w-full h-48 sm:h-56 md:h-64 object-cover group-hover:scale-110 transition-transform duration-500"
                             controls
+                            onContextMenu={disableRightClick}
+                            className="w-full h-56 object-cover transition-transform duration-500 group-hover:scale-110"
                           />
                         )}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                        <div className="absolute bottom-3 sm:bottom-4 left-3 sm:left-4 right-3 sm:right-4 transform translate-y-4 group-hover:translate-y-0 opacity-0 group-hover:opacity-100 transition-all duration-300">
-                          <div className="flex items-center justify-between text-white text-xs sm:text-sm">
-                            <div className="flex items-center gap-2 sm:gap-3">
-                              <span className="flex items-center gap-1 bg-black/30 px-2 py-1 rounded-full">
-                                ❤️ {post.likes?.length || 0}
-                              </span>
-                              <span className="flex items-center gap-1 bg-black/30 px-2 py-1 rounded-full">
-                                💬 {post.commentCount || 0}
-                              </span>
-                            </div>
-                            <span className="bg-black/50 px-2 py-1 rounded-full text-xs">
-                              {post.visibility}
-                            </span>
-                          </div>
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent pointer-events-none"></div>
+                        <div className="absolute bottom-4 left-4 right-4 flex justify-between text-[#0bb] text-sm font-semibold select-none">
+                          <span className="flex items-center gap-2 bg-black/30 rounded-2xl px-3 py-1">
+                            💬 {post.commentCount || 0}
+                          </span>
+                          <span className="rounded-2xl bg-black/30 px-3 py-1">
+                            {post.visibility}
+                          </span>
                         </div>
                       </div>
-                      
                       {post.caption && (
-                        <div className="p-3 sm:p-4">
-                          <p className="text-gray-200 text-xs sm:text-sm line-clamp-2 leading-relaxed">
+                        <div className="p-4">
+                          <p className="text-[#5599bb] text-sm line-clamp-2 leading-snug">
                             {post.caption}
                           </p>
                         </div>
@@ -377,157 +352,111 @@ function Profile() {
               )}
             </div>
 
-            {/* Enhanced Post Modal */}
-            {selectedPost && (
-              <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4">
-                <div className="bg-slate-900/95 backdrop-blur-lg rounded-2xl sm:rounded-3xl w-full max-w-6xl max-h-[95vh] sm:max-h-[90vh] overflow-hidden shadow-2xl border border-white/10">
-                  <div className="flex flex-col lg:flex-row h-full max-h-[95vh] sm:max-h-[90vh]">
-                    {/* Media Section */}
-                    <div className="lg:flex-1 bg-black/50 rounded-l-2xl sm:rounded-l-3xl flex items-center justify-center min-h-[40vh] lg:min-h-auto">
-                      {selectedPost.media[0]?.type === "image" ? (
-                        <img
-                          src={selectedPost.media[0].url}
-                          alt="Post"
-                          className="max-w-full max-h-[40vh] sm:max-h-[60vh] lg:max-h-[80vh] object-contain"
-                          onContextMenu={disableRightClick}
-                          draggable={false}
-                        />
-                      ) : (
-                        <video
-                          src={selectedPost.media[0].url}
-                          controls
-                          className="max-w-full max-h-[40vh] sm:max-h-[60vh] lg:max-h-[80vh] object-contain"
-                          onContextMenu={disableRightClick}
-                        />
-                      )}
+            {selectedPost && !commentsModalOpen && !editModalOpen && (
+              <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                <div className="bg-[#172133] border border-[#0bb] rounded-3xl shadow-neonBtn max-w-7xl w-full max-h-[90vh] overflow-hidden flex flex-col md:flex-row">
+                  {/* Media Section */}
+                  <div className="md:flex-1 bg-black flex items-center justify-center rounded-l-3xl min-h-[40vh] md:min-h-auto">
+                    {selectedPost.media[0]?.type === "image" ? (
+                      <img
+                        src={selectedPost.media[0].url}
+                        alt="Post"
+                        className="max-w-full max-h-[80vh] object-contain"
+                        onContextMenu={disableRightClick}
+                        draggable={false}
+                      />
+                    ) : (
+                      <video
+                        src={selectedPost.media[0].url}
+                        controls
+                        className="max-w-full max-h-[80vh] object-contain"
+                        onContextMenu={disableRightClick}
+                      />
+                    )}
+                  </div>
+                  {/* Content Section */}
+                  <div className="md:w-96 p-6 overflow-y-auto bg-[#1a2b46] flex flex-col gap-6 rounded-r-3xl text-left">
+                    <div>
+                      <h3 className="text-[#0bb] text-xl font-semibold mb-3">
+                        {selectedPost.caption || "No caption"}
+                      </h3>
                     </div>
 
-                    {/* Content Section */}
-                    <div className="lg:w-80 xl:w-96 p-4 sm:p-6 overflow-y-auto">
-                      <div className="space-y-3 sm:space-y-4">
-                        {/* Caption */}
+                    {Array.isArray(selectedPost.tags) &&
+                      selectedPost.tags.length > 0 && (
                         <div>
-                          <h3 className="text-lg sm:text-xl font-semibold text-white mb-2">Caption</h3>
-                          <p className="text-gray-300 leading-relaxed text-sm sm:text-base break-words">
-                            {selectedPost.caption || "No caption"}
-                          </p>
+                          <div className="flex flex-wrap gap-2">
+                            {selectedPost.tags.map((tag, idx) => (
+                              <a
+                                key={tag._id || idx}
+                                href={`/user/${
+                                  typeof tag === "object" ? tag.username : tag
+                                }`}
+                                className="text-[#0bb] bg-[#14639d]/20 px-3 py-1 rounded-xl text-sm hover:bg-[#14639d]/40 transition"
+                              >
+                                @{typeof tag === "object" ? tag.username : tag}
+                              </a>
+                            ))}
+                          </div>
                         </div>
+                      )}
 
-                        {/* Tags */}
-                        {Array.isArray(selectedPost.tags) && selectedPost.tags.length > 0 && (
-                          <div>
-                            <h4 className="text-xs sm:text-sm font-medium text-gray-400 mb-2">Tagged People</h4>
-                            <div className="flex flex-wrap gap-2">
-                              {selectedPost.tags.map((tag, i) => (
-                                <a
-                                  key={tag._id || i}
-                                  href={`/user/${tag.username}`}
-                                  className="bg-blue-600/20 text-blue-400 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm hover:bg-blue-600/30 transition-colors"
-                                >
-                                  @{typeof tag === "object" ? tag.username : tag}
-                                </a>
-                              ))}
-                            </div>
-                          </div>
-                        )}
+                    {selectedPost.location && (
+                      <div>
+                        <p className="text-[#5599bb] flex items-center gap-1 whitespace-pre-wrap">
+                          📍 {selectedPost.location}
+                        </p>
+                      </div>
+                    )}
 
-                        {/* Location */}
-                        {selectedPost.location && (
-                          <div>
-                            <h4 className="text-xs sm:text-sm font-medium text-gray-400 mb-1">Location</h4>
-                            <p className="text-gray-300 flex items-center gap-1 text-sm break-words">
-                              📍 {selectedPost.location}
-                            </p>
-                          </div>
-                        )}
+                    <div className="border-t border-[#0bb]/50 pt-4 flex flex-col gap-4">
+                      <div className="flex justify-between items-center flex-wrap gap-4">
+                        <button
+                          onClick={() => handleOpenComments(selectedPost)}
+                          className="inline-flex items-center gap-2 text-[#0bb] hover:text-[#14639d] font-medium"
+                        >
+                          <img
+                            src={commentIcon}
+                            alt="Comments"
+                            className="w-5 h-5"
+                          />
+                          {selectedPost.commentCount || 0}
+                        </button>
 
-                        {/* Stats and Actions */}
-                        <div className="border-t border-gray-700 pt-3 sm:pt-4">
-                          <div className="flex items-center justify-between mb-3 sm:mb-4 flex-wrap gap-2">
-                            <div className="flex items-center gap-2 sm:gap-4">
-                              <button
-                                className="flex items-center gap-2 hover:scale-110 transition-transform"
-                                onClick={() =>
-                                  handleLikeToggle(
-                                    selectedPost._id,
-                                    selectedPost.likedByUser
-                                  )
-                                }
-                              >
-                                <img
-                                  src={
-                                    selectedPost.likedByUser
-                                      ? heartFilled
-                                      : heartOutline
-                                  }
-                                  className="w-5 h-5 sm:w-6 sm:h-6"
-                                  alt="like"
-                                  draggable={false}
-                                />
-                              </button>
+                        <span className="bg-[#0bb]/30 px-3 py-1 rounded-xl text-sm">
+                          {selectedPost.visibility}
+                        </span>
+                      </div>
 
-                              <button
-                                className="text-white hover:text-blue-400 transition-colors font-medium text-xs sm:text-sm"
-                                onClick={() => handleOpenLikes(selectedPost)}
-                              >
-                                {selectedPost.likes?.length || 0} Likes
-                              </button>
-
-                              <button
-                                className="flex items-center gap-1 sm:gap-2 text-white hover:text-blue-400 transition-colors font-medium text-xs sm:text-sm"
-                                onClick={() => handleOpenComments(selectedPost)}
-                              >
-                                <img
-                                  src={commentIcon}
-                                  className="w-4 h-4 sm:w-5 sm:h-5"
-                                  alt="comments"
-                                  draggable={false}
-                                />
-                                {selectedPost.commentCount || 0}
-                              </button>
-                            </div>
-
-                            <span className="bg-gray-700/50 px-2 sm:px-3 py-1 rounded-full text-xs text-gray-300">
-                              {selectedPost.visibility}
-                            </span>
-                          </div>
-
-                          {/* Action Buttons */}
-                          <div className="space-y-2 sm:space-y-3">
-                            <div className="flex gap-2 sm:gap-3">
-                              <button
-                                onClick={() => {
-                                  setEditCaption(selectedPost.caption);
-                                  setEditVisibility(selectedPost.visibility);
-                                  setEditModalOpen(true);
-                                }}
-                                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-3 sm:px-4 rounded-lg transition-colors font-medium text-xs sm:text-sm"
-                              >
-                                Edit Post
-                              </button>
-                              
-                              {(selectedPost.authorId?._id || selectedPost.authorId) === userData._id && (
-                                <button
-                                  onClick={() => handleDeletePost(selectedPost._id)}
-                                  className="bg-red-600 hover:bg-red-700 text-white py-2 px-3 sm:px-4 rounded-lg transition-colors font-medium text-xs sm:text-sm"
-                                >
-                                  Delete
-                                </button>
-                              )}
-                            </div>
-
+                      <div className="flex gap-4 flex-wrap">
+                        {(selectedPost.authorId?._id ||
+                          selectedPost.authorId) === userData._id && (
+                          <>
                             <button
                               onClick={() => {
-                                setSelectedPost(null);
-                                setLikesModalOpen(false);
+                                setEditCaption(selectedPost.caption);
+                                setEditVisibility(selectedPost.visibility);
+                                setEditModalOpen(true);
                                 setCommentsModalOpen(false);
                               }}
-                              className="w-full bg-gray-700 hover:bg-gray-600 text-white py-2 px-3 sm:px-4 rounded-lg transition-colors font-medium text-xs sm:text-sm"
+                              className="flex-1 px-4 py-3 rounded-xl bg-[#0bb] hover:bg-[#14639d] text-white font-semibold transition"
                             >
-                              Close
+                              Edit
                             </button>
-                          </div>
-                        </div>
+                            <button
+                              onClick={() => handleDeletePost(selectedPost._id)}
+                              className="flex-1 px-4 py-3 rounded-xl bg-red-600 hover:bg-red-700 text-white font-semibold transition"
+                            >
+                              Delete
+                            </button>
+                          </>
+                        )}
+                        <button
+                          onClick={() => setSelectedPost(null)}
+                          className="flex-1 px-4 py-3 rounded-xl bg-gray-700 hover:bg-gray-600 text-white font-semibold transition"
+                        >
+                          Close
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -535,21 +464,22 @@ function Profile() {
               </div>
             )}
 
-            {/* Enhanced Edit Modal */}
+            {/* Edit Modal */}
             {editModalOpen && (
-              <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4">
-                <div className="bg-slate-900/95 backdrop-blur-lg rounded-2xl sm:rounded-3xl w-full max-w-md shadow-2xl border border-white/10">
-                  <div className="p-4 sm:p-6">
-                    <h3 className="text-xl sm:text-2xl font-bold text-white mb-4 sm:mb-6 flex items-center gap-3">
-                      <span className="w-1 h-5 sm:h-6 bg-blue-400 rounded-full"></span>
-                      <span>Edit Post</span>
+              <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                <div className="bg-[#172133] border border-[#0bb] rounded-3xl shadow-neonBtn w-full max-w-md">
+                  <div className="p-6">
+                    <h3 className="text-[#0bb] text-2xl font-bold mb-6 flex items-center gap-3">
+                      <span className="w-1 h-6 bg-[#0bb] rounded-full inline-block" />
+                      Edit Post
                     </h3>
-
-                    <div className="space-y-4 sm:space-y-5">
+                    <div className="space-y-5">
                       <div>
-                        <label className="block text-gray-300 font-medium mb-2 text-sm sm:text-base">Caption</label>
+                        <label className="block text-[#5599bb] font-semibold mb-2 text-sm">
+                          Caption
+                        </label>
                         <textarea
-                          className="w-full bg-white/5 border border-white/10 rounded-xl px-3 sm:px-4 py-2 sm:py-3 text-white resize-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all text-sm sm:text-base"
+                          className="w-full bg-[#1a2b46] border border-[#0bb] rounded-xl p-3 text-[#0bb] resize-none focus:outline-none focus:ring-2 focus:ring-[#0bb] transition text-sm"
                           rows="4"
                           value={editCaption}
                           onChange={(e) => {
@@ -559,11 +489,12 @@ function Profile() {
                           placeholder="Write a caption..."
                         />
                       </div>
-
                       <div>
-                        <label className="block text-gray-300 font-medium mb-2 text-sm sm:text-base">Visibility</label>
+                        <label className="block text-[#5599bb] font-semibold mb-2 text-sm">
+                          Visibility
+                        </label>
                         <select
-                          className="w-full bg-white/5 border border-white/10 rounded-xl px-3 sm:px-4 py-2 sm:py-3 text-white focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all text-sm sm:text-base"
+                          className="w-full bg-[#1a2b46] border border-[#0bb] rounded-xl p-3 text-[#0bb] focus:outline-none focus:ring-2 focus:ring-[#0bb] transition text-sm"
                           value={editVisibility}
                           onChange={(e) => {
                             setEditVisibility(e.target.value);
@@ -576,13 +507,12 @@ function Profile() {
                         </select>
                       </div>
                     </div>
-
-                    <div className="flex gap-2 sm:gap-3 mt-6 sm:mt-8">
+                    <div className="flex gap-4 mt-8">
                       <button
-                        className={`flex-1 py-2 sm:py-3 px-3 sm:px-4 rounded-xl font-medium transition-all text-sm sm:text-base ${
+                        className={`flex-1 px-4 py-3 rounded-xl font-semibold text-white transition ${
                           isSaveEnabled
-                            ? "bg-green-600 hover:bg-green-700 text-white"
-                            : "bg-gray-700 text-gray-400 cursor-not-allowed"
+                            ? "bg-[#0bb] hover:bg-[#14639d]"
+                            : "bg-gray-700 cursor-not-allowed"
                         }`}
                         disabled={!isSaveEnabled}
                         onClick={async () => {
@@ -591,7 +521,6 @@ function Profile() {
                               caption: editCaption,
                               visibility: editVisibility,
                             });
-
                             const updatedPosts = userPosts.map((post) =>
                               post._id === selectedPost._id
                                 ? {
@@ -607,7 +536,6 @@ function Profile() {
                               caption: editCaption,
                               visibility: editVisibility,
                             }));
-
                             setEditModalOpen(false);
                             setIsSaveEnabled(false);
                             showToast("success", "Post Updated Successfully!");
@@ -615,7 +543,8 @@ function Profile() {
                             console.error("Update failed:", error);
                             showToast(
                               "error",
-                              error?.response?.data?.message || "Failed to update post"
+                              error?.response?.data?.message ||
+                                "Failed to update post"
                             );
                           }
                         }}
@@ -623,7 +552,7 @@ function Profile() {
                         Save Changes
                       </button>
                       <button
-                        className="bg-gray-700 hover:bg-gray-600 text-white py-2 sm:py-3 px-3 sm:px-4 rounded-xl font-medium transition-colors text-sm sm:text-base"
+                        className="flex-1 px-4 py-3 rounded-xl bg-gray-700 hover:bg-gray-600 text-white font-semibold transition"
                         onClick={() => {
                           setEditModalOpen(false);
                           setIsSaveEnabled(false);
@@ -637,177 +566,126 @@ function Profile() {
               </div>
             )}
 
-            {/* Enhanced Likes Modal */}
-            {likesModalOpen && (
-              <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4">
-                <div className="bg-slate-900/95 backdrop-blur-lg rounded-2xl sm:rounded-3xl w-full max-w-md max-h-[80vh] shadow-2xl border border-white/10">
-                  <div className="p-4 sm:p-6">
-                    <h3 className="text-lg sm:text-xl font-bold text-white mb-3 sm:mb-4 flex items-center gap-3">
-                      <span className="text-red-500">❤️</span>
-                      <span>Liked by ({likesList.length})</span>
-                    </h3>
-                    
-                    <div className="overflow-y-auto max-h-60 sm:max-h-80 space-y-2 sm:space-y-3">
-                      {likesList.length === 0 ? (
-                        <p className="text-gray-400 text-center py-6 sm:py-8 text-sm sm:text-base">No likes yet</p>
-                      ) : (
-                        likesList.map((like) => (
-                          <div key={like._id} className="flex items-center gap-3 p-2 hover:bg-white/5 rounded-lg transition-colors">
-                            <img
-                              src={like.user?.profileImageURL || defaultAvatar}
-                              className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover border-2 border-gray-600"
-                              alt={like.user?.username}
-                              draggable={false}
-                            />
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2">
-                                <span className="font-medium text-white text-sm sm:text-base truncate">@{like.user?.username}</span>
-                                {like.user?.isVerified && (
-                                  <img
-                                    src={verifiedIcon}
-                                    alt="Verified"
-                                    className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0"
-                                    draggable={false}
-                                  />
-                                )}
-                              </div>
-                              {like.user?.name && (
-                                <p className="text-gray-400 text-xs sm:text-sm truncate">{like.user.name}</p>
-                              )}
-                            </div>
-                          </div>
-                        ))
-                      )}
-                    </div>
-
-                    <button
-                      onClick={() => {
-                        setSelectedPost(null);
-                        setLikesModalOpen(false);
-                        setCommentsModalOpen(false);
-                      }}
-                      className="w-full mt-4 sm:mt-6 bg-gray-700 hover:bg-gray-600 text-white py-2 sm:py-3 rounded-xl font-medium transition-colors text-sm sm:text-base"
-                    >
-                      Close
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Enhanced Comments Modal */}
+            {/* Comments Modal */}
             {commentsModalOpen && (
-              <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4">
-                <div className="bg-slate-900/95 backdrop-blur-lg rounded-2xl sm:rounded-3xl w-full max-w-lg max-h-[85vh] shadow-2xl border border-white/10 flex flex-col">
-                  <div className="p-4 sm:p-6 border-b border-gray-700">
-                    <h3 className="text-lg sm:text-xl font-bold text-white flex items-center gap-3">
-                      <span>💬</span>
-                      <span>Comments ({comments.length})</span>
-                    </h3>
-                  </div>
-
-                  <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-3 sm:space-y-4">
+              <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                <div className="bg-[#172133] border border-[#0bb] rounded-3xl shadow-neonBtn w-full max-w-lg max-h-[85vh] flex flex-col overflow-hidden">
+                  <header className="flex justify-between items-center p-4 border-b border-[#0bb] text-[#0bb] font-semibold text-lg">
+                    <span>💬 Comments ({comments.length})</span>
+                    <button
+                      aria-label="Close comments"
+                      className="hover:text-[#14639d] transition"
+                      onClick={() => {
+                        setCommentsModalOpen(false);
+                        setSelectedPost(null);
+                      }}
+                    >
+                      ✕
+                    </button>
+                  </header>
+                  <main className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin scrollbar-thumb-[#0bb]/50 scrollbar-track-transparent text-[#5599bb]">
                     {comments.length === 0 ? (
-                      <div className="text-center py-8 sm:py-12">
-                        <div className="text-3xl sm:text-4xl mb-2">💭</div>
-                        <p className="text-gray-400 text-sm sm:text-base">No comments yet</p>
-                        <p className="text-gray-500 text-xs sm:text-sm mt-1">Be the first to comment!</p>
+                      <div className="text-center italic">
+                        No comments yet. Be the first!
                       </div>
                     ) : (
                       comments.map((comment) => (
-                        <div key={comment._id} className="flex gap-2 sm:gap-3 p-2 sm:p-3 hover:bg-white/5 rounded-lg transition-colors">
+                        <div
+                          key={comment._id}
+                          className="flex gap-4 items-start"
+                        >
                           <img
                             src={comment.user?.profileImageURL || defaultAvatar}
-                            className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover border-2 border-gray-600 flex-shrink-0"
-                            alt="commenter"
+                            alt={comment.user?.username ?? "User"}
                             draggable={false}
+                            className="rounded-full w-10 h-10 object-cover border-2 border-[#0bb] flex-shrink-0"
                           />
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className="font-medium text-blue-300 text-sm sm:text-base truncate">@{comment.user?.username}</span>
+                          <div>
+                            <div className="flex items-center gap-1 mb-1">
+                              <a
+                                href={`/user/${comment.user?.username}`}
+                                className="text-[#0bb] font-semibold hover:text-[#14639d] transition"
+                              >
+                                @{comment.user?.username}
+                              </a>
                               {comment.user?.isVerified && (
                                 <img
                                   src={verifiedIcon}
                                   alt="Verified"
-                                  className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0"
-                                  draggable={false}
+                                  className="w-4 h-4"
                                 />
                               )}
                             </div>
-                            <p className="text-gray-300 leading-relaxed text-sm sm:text-base break-words">{comment.text}</p>
+                            <p className="leading-relaxed whitespace-pre-wrap">
+                              {comment.text}
+                            </p>
                           </div>
                         </div>
                       ))
                     )}
-                  </div>
-
-                  <div className="p-4 sm:p-6 border-t border-gray-700">
-                    <div className="flex gap-2 sm:gap-3 mb-3 sm:mb-4">
-                      <input
-                        ref={commentInputRef}
-                        type="text"
-                        className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 sm:px-4 py-2 sm:py-3 text-white focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all text-sm sm:text-base"
-                        placeholder="Add a comment..."
-                        value={newComment}
-                        onChange={(e) => setNewComment(e.target.value)}
-                        onKeyPress={(e) => e.key === 'Enter' && handleAddComment()}
-                      />
-                      <button
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-xl font-medium transition-colors text-sm sm:text-base"
-                        onClick={handleAddComment}
-                      >
-                        Send
-                      </button>
-                    </div>
-
+                  </main>
+                  <footer className="p-4 border-t border-[#0bb] flex gap-2 bg-[#172133]">
+                    <input
+                      ref={commentInputRef}
+                      type="text"
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && handleAddComment()}
+                      placeholder="Add a comment..."
+                      className="flex-1 rounded-xl py-2 px-4 bg-[#0bb]/10 border border-[#0bb]/50 text-[#0bb] placeholder-[#0bb]/70 focus:outline-none focus:ring-2 focus:ring-[#0bb] transition"
+                    />
                     <button
-                      onClick={() => {
-                        setSelectedPost(null);
-                        setLikesModalOpen(false);
-                        setCommentsModalOpen(false);
-                      }}
-                      className="w-full bg-gray-700 hover:bg-gray-600 text-white py-2 sm:py-3 rounded-xl font-medium transition-colors text-sm sm:text-base"
+                      onClick={handleAddComment}
+                      disabled={!newComment.trim()}
+                      className="rounded-xl bg-[#0bb] hover:bg-[#14639d] px-4 py-2 text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition"
                     >
-                      Close
+                      <img
+                        src={commentIcon}
+                        alt="Send comment"
+                        className="w-5 h-5"
+                      />
                     </button>
-                  </div>
+                  </footer>
                 </div>
               </div>
             )}
           </>
         )}
 
-        {/* Enhanced Toast Notifications */}
+        {/* Toast */}
         {toast && (
           <div
-            className={`fixed top-4 right-4 z-50 px-4 sm:px-6 py-3 sm:py-4 rounded-xl shadow-2xl text-white font-medium transform transition-all duration-300 max-w-xs sm:max-w-sm ${
-              toast.type === "success" 
-                ? "bg-gradient-to-r from-green-600 to-green-500" 
-                : "bg-gradient-to-r from-red-600 to-red-500"
+            className={`fixed top-4 right-4 z-50 px-6 py-4 rounded-2xl shadow-subtleNeon backdrop-blur-md max-w-xs sm:max-w-sm ${
+              toast.type === "success"
+                ? "bg-green-900/90 border border-green-700 text-green-200"
+                : "bg-red-900/90 border border-red-700 text-red-200"
             }`}
           >
-            <div className="flex items-center gap-2 sm:gap-3">
-              <span className="text-base sm:text-xl">
-                {toast.type === "success" ? "✅" : "❌"}
-              </span>
-              <span className="text-xs sm:text-sm break-words">{toast.message}</span>
+            <div className="flex items-center gap-3">
+              <div
+                className={`w-3 h-3 rounded-full ${
+                  toast.type === "success" ? "bg-green-400" : "bg-red-400"
+                } animate-pulse`}
+              ></div>
+              <span className="font-medium">{toast.message}</span>
             </div>
           </div>
         )}
       </div>
 
-      <style jsx>{`
-        .line-clamp-2 {
-          display: -webkit-box;
-          -webkit-line-clamp: 2;
-          -webkit-box-orient: vertical;
-          overflow: hidden;
+      {/* Neon shadows */}
+      <style>{`
+        .shadow-subtleNeon {
+          box-shadow: 0 0 3px #0bb6, 0 0 8px #0bb5a;
         }
-        
-        @media (max-width: 640px) {
-          .max-h-\[95vh\] {
-            max-height: 95vh;
-          }
+        .shadow-neonBtn {
+          box-shadow: 0 0 4px #0bb8, 0 0 10px #0bb8a;
+        }
+        .scrollbar-thin {
+          scrollbar-width: thin;
+        }
+        .scrollbar-thumb-[#0bb]::-webkit-scrollbar-thumb {
+          background-color: #0bb;
         }
       `}</style>
     </div>

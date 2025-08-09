@@ -30,11 +30,9 @@ function UserProfile() {
   const [toast, setToast] = useState(null);
   const [userPosts, setUserPosts] = useState([]);
   const [selectedPost, setSelectedPost] = useState(null);
-  const [likesModalOpen, setLikesModalOpen] = useState(false);
   const [commentsModalOpen, setCommentsModalOpen] = useState(false);
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState("");
-  const [likesList, setLikesList] = useState([]);
   const [reportModalOpen, setReportModalOpen] = useState(false);
   const [reportReason, setReportReason] = useState("");
   const [reportLoading, setReportLoading] = useState(false);
@@ -123,17 +121,6 @@ function UserProfile() {
     }
   };
 
-  const handleOpenLikes = async (post) => {
-    try {
-      const res = await axios.get(`/post/${post._id}/likes`);
-      setSelectedPost(post);
-      setLikesList(res.data.likes || []);
-      setLikesModalOpen(true);
-    } catch (error) {
-      console.error("Failed to fetch likes:", error);
-    }
-  };
-
   const handleOpenComments = async (post) => {
     try {
       setSelectedPost(post);
@@ -180,98 +167,37 @@ function UserProfile() {
     }
   };
 
-  const handleLikeToggle = async (postId, isCurrentlyLiked) => {
-    try {
-      const updatedPosts = userPosts.map((p) => {
-        if (p._id === postId) {
-          const newLikes = isCurrentlyLiked
-            ? p.likes.filter((id) => id !== currentUserId)
-            : [...p.likes, currentUserId];
-
-          return {
-            ...p,
-            likedByUser: !isCurrentlyLiked,
-            likes: newLikes,
-          };
-        }
-        return p;
-      });
-      setUserPosts(updatedPosts);
-      if (selectedPost && selectedPost._id === postId) {
-        setSelectedPost((prev) => ({
-          ...prev,
-          likedByUser: !isCurrentlyLiked,
-          likes: isCurrentlyLiked
-            ? prev.likes.filter((id) => id !== currentUserId)
-            : [...prev.likes, currentUserId],
-        }));
-      }
-
-      await axios.post(
-        `/post/${postId}/${isCurrentlyLiked ? "unlike" : "like"}`
-      );
-    } catch (e) {
-      console.error("Like toggle failed:", e);
-
-      const revertedPosts = userPosts.map((p) => {
-        if (p._id === postId) {
-          return {
-            ...p,
-            likedByUser: isCurrentlyLiked,
-            likes: isCurrentlyLiked
-              ? [...p.likes, currentUserId]
-              : p.likes.filter((id) => id !== currentUserId),
-          };
-        }
-        return p;
-      });
-      setUserPosts(revertedPosts);
-
-      if (selectedPost && selectedPost._id === postId) {
-        setSelectedPost((prev) => ({
-          ...prev,
-          likedByUser: isCurrentlyLiked,
-          likes: isCurrentlyLiked
-            ? [...prev.likes, currentUserId]
-            : prev.likes.filter((id) => id !== currentUserId),
-        }));
-      }
-    }
-  };
-
   const disableRightClick = (e) => e.preventDefault();
 
   if (!userData) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-slate-900 to-gray-900 p-4">
-        <div className="max-w-4xl mx-auto">
-          <div className="bg-gray-800 border border-gray-700 rounded-3xl p-12 shadow-2xl backdrop-blur-md text-center">
-            <div className="w-16 h-16 border-4 border-cyan-400 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-gray-300 text-lg">Loading profile...</p>
-          </div>
+      <div className="min-h-screen bg-[#172133] p-4 text-[#0bb] flex items-center justify-center">
+        <div className="flex flex-col items-center space-y-4">
+          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-cyan-400 border-t-transparent"></div>
+          <p className="text-[#5599bb] text-lg">Loading profile...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-slate-900 to-gray-900 p-4">
+    <div className="min-h-screen bg-[#172133] p-4 text-[#0bb]">
       <div className="max-w-6xl mx-auto">
         <div className="mb-6">
           <button
             onClick={() => navigate(-1)}
-            className="flex items-center gap-2 text-gray-400 hover:text-cyan-400 transition-colors duration-300 group"
+            className="flex items-center gap-2 text-[#0bb] hover:text-[#099] transition-colors duration-300 group"
           >
             <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform duration-300" />
-            <span>Back</span>
+            <span className="text-sm sm:text-base">Back</span>
           </button>
         </div>
 
         <div className="mb-8">
-          <div className="bg-gray-800 border border-gray-700 rounded-3xl p-8 shadow-2xl backdrop-blur-md">
+          <div className="bg-[#1a2b46] rounded-3xl p-8 shadow-subtleNeon border border-[#0bb] backdrop-blur-md">
             <div className="flex flex-col md:flex-row gap-8 items-center md:items-start">
               <div className="relative flex-shrink-0">
-                <div className="w-32 h-32 md:w-40 md:h-40 rounded-full overflow-hidden border-4 border-gray-600 shadow-2xl">
+                <div className="w-24 h-24 sm:w-32 sm:h-32 md:w-40 md:h-40 rounded-full overflow-hidden border-4 border-[#0bb] shadow-neonBtn">
                   <img
                     src={userData.profileImageURL || defaultAvatar}
                     alt="Profile"
@@ -279,22 +205,22 @@ function UserProfile() {
                     draggable={false}
                   />
                 </div>
-                <div className="absolute -bottom-2 -right-2 p-3 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-full">
+                <div className="absolute -bottom-2 -right-2 p-3 bg-gradient-to-r from-[#0bb] to-[#14639d] rounded-full shadow-neonBtn">
                   <UserIcon className="w-6 h-6 text-white" />
                 </div>
               </div>
 
               <div className="flex-1 text-center md:text-left">
-                <div className="flex flex-col md:flex-row md:items-center gap-4 mb-4">
-                  <div className="flex items-center justify-center md:justify-start gap-3">
-                    <h1 className="text-3xl font-bold text-transparent bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text">
+                <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4 mb-4">
+                  <div className="flex items-center justify-center md:justify-start gap-2 sm:gap-3">
+                    <h1 className="text-xl sm:text-3xl md:text-4xl font-bold text-[#0bb]">
                       @{userData.username}
                     </h1>
                     {userData.isVerified && (
                       <img
                         src={verifiedIcon}
                         alt="Verified"
-                        className="w-7 h-7"
+                        className="w-5 h-5 sm:w-6 sm:h-7"
                         draggable={false}
                       />
                     )}
@@ -326,71 +252,73 @@ function UserProfile() {
                             console.error("Follow toggle failed", error);
                           }
                         }}
-                        className={`px-4 py-2 font-semibold rounded-xl transition-all duration-300 hover:scale-105 active:scale-95 flex items-center gap-2 ${
+                        className={`px-4 py-2 font-semibold rounded-xl transition-all duration-300 hover:scale-105 active:scale-95 flex items-center gap-2 text-xs sm:text-base w-full sm:w-auto text-center ${
                           isFollowing
-                            ? "bg-gray-700 border border-gray-600 text-gray-100 hover:bg-gray-600 hover:border-red-500 hover:text-red-400"
-                            : "bg-gradient-to-r from-cyan-500 to-blue-600 text-white hover:from-cyan-400 hover:to-blue-500 hover:shadow-xl hover:shadow-cyan-500/25"
-                        } text-sm sm:text-base w-full sm:w-auto text-center`}
+                            ? "bg-gray-700 border border-[#0bb] text-[#0bb] hover:bg-[#14639d] hover:border-[#0bb] hover:text-white"
+                            : "bg-gradient-to-r from-[#0bb] to-[#14639d] text-white hover:from-[#099] hover:to-[#0a4d74] hover:shadow-neonBtn"
+                        }`}
                       >
                         {isFollowing ? (
                           <UserMinus className="w-4 h-4" />
                         ) : (
                           <UserPlus className="w-4 h-4" />
                         )}
-                        {isFollowing ? "Unfollow" : "Follow"}
+                        <span>{isFollowing ? "Unfollow" : "Follow"}</span>
                       </button>
 
                       <button
                         onClick={() => navigate(`/chat/${userData.username}`)}
-                        className="px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-semibold rounded-xl transition-all duration-300 hover:from-green-400 hover:to-emerald-500 hover:scale-105 active:scale-95 flex items-center gap-2 text-sm sm:text-base w-full sm:w-auto justify-center"
+                        className="px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-semibold rounded-xl transition-all duration-300 hover:from-green-400 hover:to-emerald-500 hover:scale-105 active:scale-95 flex items-center gap-2 text-xs sm:text-base w-full sm:w-auto justify-center"
                       >
                         <MessageCircle className="w-4 h-4" />
-                        Message
+                        <span>Message</span>
                       </button>
 
                       <button
                         onClick={() => setReportModalOpen(true)}
-                        className="px-4 py-2 bg-red-500/20 border border-red-500/30 text-red-400 rounded-xl hover:bg-red-500/30 transition-all duration-300 hover:scale-105 active:scale-95 flex items-center gap-2 text-sm sm:text-base w-full sm:w-auto justify-center"
+                        className="px-4 py-2 bg-red-600/20 border border-red-600/50 text-red-400 rounded-xl hover:bg-red-600/30 transition-all duration-300 hover:scale-105 active:scale-95 flex items-center gap-2 text-xs sm:text-base w-full sm:w-auto justify-center"
                       >
                         <Flag className="w-4 h-4" />
-                        Report
+                        <span>Report</span>
                       </button>
                     </div>
                   )}
                 </div>
 
-                <p className="text-xl text-gray-300 mb-3">{userData.name}</p>
+                <p className="text-base sm:text-xl text-[#0bb] mb-3">
+                  {userData.name}
+                </p>
 
                 {userData.bio && (
-                  <p className="text-gray-400 leading-relaxed mb-6 max-w-2xl">
+                  <p className="text-sm sm:text-base text-[#5599bb] leading-relaxed mb-6 max-w-2xl">
                     {userData.bio}
                   </p>
                 )}
 
-                <div className="flex gap-8 justify-center md:justify-start">
+                <div className="flex gap-8 justify-center md:justify-start text-xs sm:text-sm">
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-gray-100">
+                    <div className="text-xl sm:text-2xl font-bold text-[#0bb]">
                       {userPosts.length}
                     </div>
-                    <div className="text-gray-400 text-sm">Posts</div>
+                    <div className="text-[#5599bb]">Posts</div>
                   </div>
                   <a
                     href={`/user/${userData.username}/followers`}
-                    className="text-center hover:scale-105 transition-transform duration-300"
+                    className="text-center hover:text-[#099] hover:scale-105 transition-transform duration-300"
                   >
-                    <div className="text-2xl font-bold text-gray-100">
+                    <div className="text-xl sm:text-2xl font-bold text-[#0bb]">
                       {userData.followers?.length || 0}
                     </div>
-                    <div className="text-gray-400 text-sm">Followers</div>
+                    <div className="text-[#5599bb]">Followers</div>
                   </a>
                   <a
                     href={`/user/${userData.username}/following`}
-                    className="text-center hover:scale-105 transition-transform duration-300"
+                    className="text-center hover:text-[#099] hover:scale-105 transition-transform duration-300"
                   >
-                    <div className="text-2xl font-bold text-gray-100">
+                    <div className="text-xl sm:text-2xl font-bold text-[#0bb]">
                       {userData.following?.length || 0}
                     </div>
-                    <div className="text-gray-400 text-sm">Following</div>
+                    <div className="text-[#5599bb]">Following</div>
                   </a>
                 </div>
               </div>
@@ -398,39 +326,35 @@ function UserProfile() {
           </div>
         </div>
 
+        {/* Posts Section */}
         <div className="mb-8">
-          <div className="bg-gray-800 border border-gray-700 rounded-3xl p-6 shadow-2xl backdrop-blur-md">
+          <div className="bg-[#1a2b46] rounded-3xl p-6 shadow-subtleNeon border border-[#0bb] backdrop-blur-md">
             <div className="flex items-center gap-3 mb-6">
-              <Grid3X3 className="w-6 h-6 text-cyan-400" />
-              <h2 className="text-xl font-semibold text-gray-100">Posts</h2>
-              <div className="flex-1 h-px bg-gradient-to-r from-gray-600/50 to-transparent"></div>
+              <Grid3X3 className="w-5 h-5 sm:w-6 sm:h-6 text-[#0bb]" />
+              <h2 className="text-lg sm:text-xl font-semibold text-[#0bb]">Posts</h2>
+              <div className="flex-1 h-px bg-gradient-to-r from-[#0bb]/50 to-transparent" />
             </div>
 
             {userPosts.length === 0 ? (
-              <div className="text-center py-12">
-                <div className="p-6 bg-gray-700/50 rounded-full w-20 h-20 mx-auto mb-4 flex items-center justify-center">
-                  <Grid3X3 className="w-10 h-10 text-gray-400" />
+              <div className="text-center py-12 text-[#5599bb]">
+                <div className="p-6 bg-[#0bb]/10 rounded-full w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4 flex items-center justify-center">
+                  <Grid3X3 className="w-8 h-8 sm:w-10 sm:h-10 text-[#0bb]/70" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-300 mb-2">
-                  No posts yet
-                </h3>
-                <p className="text-gray-400">
-                  This user hasn't shared any posts
-                </p>
+                <h3 className="text-lg font-bold">No posts yet</h3>
+                <p>This user hasn't shared any posts</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {userPosts.map((post, index) => (
                   <div
                     key={post._id}
-                    className="group bg-gray-700 border border-gray-600 rounded-2xl overflow-hidden shadow-lg hover:shadow-xl hover:shadow-cyan-500/10 transition-all duration-300 hover:scale-[1.02] hover:border-gray-500 cursor-pointer"
+                    className="group bg-[#172133] border border-[#1f2a47] rounded-3xl overflow-hidden shadow-subtleNeon transition-transform duration-300 hover:scale-[1.02] hover:shadow-neonBtn cursor-pointer"
                     style={{
                       animationDelay: `${index * 50}ms`,
                       animation: "fadeInUp 0.5s ease-out forwards",
                     }}
                     onClick={() => {
-                      const likedByUser = post.likes?.includes(currentUserId);
-                      setSelectedPost({ ...post, likedByUser });
+                      setSelectedPost({ ...post });
                     }}
                   >
                     <div className="relative aspect-square overflow-hidden">
@@ -443,8 +367,8 @@ function UserProfile() {
                             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                             draggable={false}
                           />
-                          <div className="absolute top-3 right-3 p-2 bg-gray-900/70 backdrop-blur-sm rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                            <ImageIcon className="w-4 h-4 text-white" />
+                          <div className="absolute top-3 right-3 p-2 bg-[#172133]/90 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                            <ImageIcon className="w-4 h-4 text-[#0bb]" />
                           </div>
                         </>
                       ) : (
@@ -457,33 +381,16 @@ function UserProfile() {
                             onContextMenu={disableRightClick}
                             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                           />
-                          <div className="absolute top-3 right-3 p-2 bg-gray-900/70 backdrop-blur-sm rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                            <Play className="w-4 h-4 text-white" />
+                          <div className="absolute top-3 right-3 p-2 bg-[#172133]/90 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                            <Play className="w-4 h-4 text-[#0bb]" />
                           </div>
                         </>
                       )}
-
-                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                        <div className="flex items-center gap-4 text-white">
-                          <div className="flex items-center gap-1">
-                            <Heart className="w-5 h-5" />
-                            <span className="font-medium">
-                              {post.likes?.length || 0}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <MessageCircle className="w-5 h-5" />
-                            <span className="font-medium">
-                              {post.commentCount || 0}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
                     </div>
 
                     {post.caption && (
                       <div className="p-3">
-                        <p className="text-sm text-gray-300 line-clamp-2 leading-tight">
+                        <p className="text-xs sm:text-sm text-[#5599bb] line-clamp-2 leading-tight">
                           {post.caption}
                         </p>
                       </div>
@@ -495,26 +402,27 @@ function UserProfile() {
           </div>
         </div>
 
+        {/* Report User Modal */}
         {reportModalOpen && (
-          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div className="bg-gray-800 border border-gray-700 rounded-3xl shadow-2xl w-full max-w-md">
-              <div className="p-6 border-b border-gray-700">
+          <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-[#172133] border border-[#0bb] rounded-3xl shadow-neonBtn w-full max-w-md">
+              <div className="p-6 border-b border-[#0bb]">
                 <div className="flex items-center gap-2">
                   <Flag className="w-5 h-5 text-red-500" />
-                  <h3 className="text-xl font-semibold text-gray-100">
+                  <h3 className="text-lg sm:text-xl font-semibold text-[#0bb]">
                     Report User
                   </h3>
                 </div>
               </div>
 
               <div className="p-6">
-                <p className="text-gray-400 text-sm mb-4">
+                <p className="text-sm sm:text-base text-[#5599bb] mb-4">
                   Please describe the reason clearly. Reports without valid
                   reasons will not be reviewed.
                 </p>
 
                 <textarea
-                  className="w-full px-4 py-3 bg-gray-700 border-2 border-gray-600 rounded-2xl text-gray-100 placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-4 focus:ring-cyan-500/20 transition-all duration-300 resize-none min-h-[120px]"
+                  className="w-full px-4 py-3 bg-[#1a2b46] border-2 border-[#0bb] rounded-3xl text-[#0bb] placeholder-[#0bb]/70 focus:outline-none focus:ring-2 focus:ring-[#0bb] transition-all duration-300 resize-none min-h-[120px]"
                   placeholder="Reason for reporting..."
                   value={reportReason}
                   onChange={(e) => setReportReason(e.target.value)}
@@ -526,7 +434,7 @@ function UserProfile() {
                       setReportModalOpen(false);
                       setReportReason("");
                     }}
-                    className="flex-1 px-4 py-3 bg-gray-700 text-gray-100 rounded-2xl hover:bg-gray-600 transition-colors duration-300"
+                    className="flex-1 px-4 py-3 bg-[#1a2b46] text-[#0bb] rounded-3xl hover:bg-[#0bb]/20 transition-colors duration-300"
                   >
                     Cancel
                   </button>
@@ -556,7 +464,7 @@ function UserProfile() {
                       }
                     }}
                     disabled={reportLoading}
-                    className="flex-1 px-4 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-2xl hover:from-red-400 hover:to-red-500 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    className="flex-1 px-4 py-3 text-sm bg-gradient-to-r from-red-600 to-red-700 text-white rounded-3xl hover:from-red-500 hover:to-red-600 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
                     {reportLoading ? (
                       <>
@@ -576,19 +484,20 @@ function UserProfile() {
           </div>
         )}
 
+        {/* Selected Post Modal */}
         {selectedPost && (
-          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div className="bg-gray-800 border border-gray-700 rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+          <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-[#172133] border border-[#0bb] rounded-3xl shadow-neonBtn w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
               <div className="relative">
                 <div className="absolute top-4 right-4 z-10">
                   <div className="relative group">
-                    <button className="p-2 bg-gray-900/70 backdrop-blur-sm rounded-xl hover:bg-gray-800 transition-colors duration-300 peer">
-                      <MoreHorizontal className="w-5 h-5 text-white" />
+                    <button className="p-2 bg-[#1a2b46]/70 rounded-3xl hover:bg-[#0bb]/40 transition-colors duration-300 peer">
+                      <MoreHorizontal className="w-5 h-5 text-[#0bb]" />
                     </button>
-                    <div className="absolute right-0 top-full mt-2 bg-gray-700 border border-gray-600 rounded-2xl shadow-2xl opacity-0 invisible peer-focus:opacity-100 peer-focus:visible hover:opacity-100 hover:visible transition-all duration-300 z-10 min-w-[160px]">
+                    <div className="absolute right-0 top-full mt-2 bg-[#0bb]/20 border border-[#0bb]/40 rounded-3xl shadow-neonBtn opacity-0 invisible peer-focus:opacity-100 peer-focus:visible hover:opacity-100 hover:visible transition-all duration-300 z-10 min-w-[160px]">
                       <button
                         onClick={() => setReportPostModalOpen(true)}
-                        className="w-full px-4 py-3 text-left text-gray-200 hover:bg-gray-600 hover:text-red-400 transition-colors duration-300 rounded-2xl flex items-center gap-2"
+                        className="w-full px-4 py-3 text-left text-red-400 hover:bg-red-600/30 hover:text-red-300 transition-colors duration-300 rounded-3xl flex items-center gap-2"
                       >
                         <Flag className="w-4 h-4" />
                         Report Post
@@ -617,9 +526,9 @@ function UserProfile() {
                 )}
               </div>
 
-              <div className="flex-1 p-6 overflow-y-auto">
+              <div className="flex-1 p-6 overflow-y-auto text-[#0bb]">
                 {selectedPost.caption && (
-                  <p className="text-xl text-gray-100 leading-relaxed mb-4 break-words">
+                  <p className="text-lg sm:text-xl leading-relaxed mb-4 break-words">
                     {selectedPost.caption}
                   </p>
                 )}
@@ -630,7 +539,7 @@ function UserProfile() {
                       <a
                         key={u._id}
                         href={`/user/${u.username}`}
-                        className="px-3 py-1 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border border-cyan-500/30 rounded-xl text-cyan-300 text-sm font-medium hover:from-cyan-500/30 hover:to-blue-500/30 transition-all duration-300"
+                        className="px-3 py-1 bg-[#0bb]/20 border border-[#0bb]/40 rounded-3xl text-[#0bb] text-sm font-medium hover:bg-[#0bb]/30 transition-all duration-300"
                       >
                         @{u.username}
                       </a>
@@ -639,7 +548,7 @@ function UserProfile() {
                 )}
 
                 {selectedPost.location && (
-                  <div className="flex items-center gap-2 text-gray-400 mb-4">
+                  <div className="flex items-center gap-2 text-[#5599bb] mb-4">
                     <MapPin className="w-4 h-4" />
                     <span>{selectedPost.location}</span>
                   </div>
@@ -647,50 +556,13 @@ function UserProfile() {
 
                 <div className="flex items-center gap-6 mb-6">
                   <button
-                    onClick={() =>
-                      handleLikeToggle(
-                        selectedPost._id,
-                        selectedPost.likedByUser
-                      )
-                    }
-                    className="flex items-center gap-2 group"
-                  >
-                    <div
-                      className={`p-2 rounded-xl transition-all duration-300 ${
-                        selectedPost.likedByUser
-                          ? "bg-red-500/20 group-hover:bg-red-500/30"
-                          : "bg-gray-700 group-hover:bg-gray-600"
-                      }`}
-                    >
-                      <Heart
-                        className={`w-5 h-5 transition-all duration-300 ${
-                          selectedPost.likedByUser
-                            ? "text-red-500 fill-red-500"
-                            : "text-gray-400 group-hover:text-red-400"
-                        }`}
-                      />
-                    </div>
-                    <span
-                      className="text-gray-300 hover:text-cyan-400 transition-colors duration-300 cursor-pointer"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleOpenLikes(selectedPost);
-                      }}
-                    >
-                      {selectedPost.likes?.length || 0} likes
-                    </span>
-                  </button>
-
-                  <button
                     onClick={() => handleOpenComments(selectedPost)}
-                    className="flex items-center gap-2 group"
+                    className="flex items-center gap-2 hover:text-[#14639d] transition-colors duration-300"
                   >
-                    <div className="p-2 bg-gray-700 rounded-xl group-hover:bg-gray-600 transition-colors duration-300">
-                      <MessageCircle className="w-5 h-5 text-gray-400 group-hover:text-blue-400 transition-colors duration-300" />
+                    <div className="p-2 bg-[#1a2b46] rounded-3xl">
+                      <MessageCircle className="w-5 h-5 text-[#0bb]" />
                     </div>
-                    <span className="text-gray-300 hover:text-cyan-400 transition-colors duration-300">
-                      {selectedPost.commentCount || 0} comments
-                    </span>
+                    <span>{selectedPost.commentCount || 0} comments</span>
                   </button>
                 </div>
 
@@ -698,10 +570,9 @@ function UserProfile() {
                   <button
                     onClick={() => {
                       setSelectedPost(null);
-                      setLikesModalOpen(false);
                       setCommentsModalOpen(false);
                     }}
-                    className="px-6 py-3 bg-gray-700 text-gray-100 rounded-2xl hover:bg-gray-600 transition-colors duration-300 flex items-center gap-2"
+                    className="px-6 py-3 bg-[#0bb] rounded-3xl hover:bg-[#14639d] transition-colors duration-300 flex items-center gap-2 text-black font-semibold"
                   >
                     <X className="w-4 h-4" />
                     Close
@@ -712,13 +583,14 @@ function UserProfile() {
           </div>
         )}
 
+        {/* Report Post Modal */}
         {reportPostModalOpen && selectedPost && (
-          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div className="bg-gray-800 border border-gray-700 rounded-3xl shadow-2xl w-full max-w-md">
-              <div className="p-6 border-b border-gray-700">
+          <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-[#172133] border border-[#0bb] rounded-3xl shadow-neonBtn w-full max-w-md">
+              <div className="p-6 border-b border-[#0bb]">
                 <div className="flex items-center gap-2">
                   <Flag className="w-5 h-5 text-red-500" />
-                  <h3 className="text-xl font-semibold text-gray-100">
+                  <h3 className="text-lg sm:text-xl font-semibold text-[#0bb]">
                     Report Post
                   </h3>
                 </div>
@@ -726,7 +598,7 @@ function UserProfile() {
 
               <div className="p-6">
                 <textarea
-                  className="w-full px-4 py-3 bg-gray-700 border-2 border-gray-600 rounded-2xl text-gray-100 placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-4 focus:ring-cyan-500/20 transition-all duration-300 resize-none min-h-[120px]"
+                  className="w-full px-4 py-3 bg-[#1a2b46] border-2 border-[#0bb] rounded-3xl text-[#0bb] placeholder-[#0bb]/70 focus:outline-none focus:ring-2 focus:ring-[#0bb] transition-all duration-300 resize-none min-h-[120px]"
                   placeholder="Write your reason for reporting this post..."
                   value={reportPostReason}
                   onChange={(e) => setReportPostReason(e.target.value)}
@@ -738,7 +610,7 @@ function UserProfile() {
                       setReportPostModalOpen(false);
                       setReportPostReason("");
                     }}
-                    className="flex-1 px-4 py-3 bg-gray-700 text-gray-100 rounded-2xl hover:bg-gray-600 transition-colors duration-300"
+                    className="flex-1 px-4 py-3 bg-[#1a2b46] text-[#0bb] rounded-3xl hover:bg-[#0bb]/20 transition-colors duration-300"
                   >
                     Cancel
                   </button>
@@ -758,15 +630,14 @@ function UserProfile() {
                       } catch (err) {
                         showToast(
                           "error",
-                          err.response?.data?.message ||
-                            "Failed to report post."
+                          err.response?.data?.message || "Failed to report post."
                         );
                         console.error("Post report error:", err);
                       } finally {
                         setReportPostLoading(false);
                       }
                     }}
-                    className="flex-1 px-4 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-2xl hover:from-red-400 hover:to-red-500 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    className="flex-1 px-4 py-3 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-3xl hover:from-red-500 hover:to-red-600 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
                     {reportPostLoading ? (
                       <>
@@ -786,176 +657,105 @@ function UserProfile() {
           </div>
         )}
 
-        {likesModalOpen && (
-          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div className="bg-gray-800 border border-gray-700 rounded-3xl shadow-2xl w-full max-w-md max-h-[80vh] overflow-hidden">
-              <div className="p-6 border-b border-gray-700">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-xl font-semibold text-gray-100 flex items-center gap-2">
-                    <Heart className="w-5 h-5 text-red-500" />
-                    Liked by
-                  </h3>
-                  <button
-                    onClick={() => {
-                      setSelectedPost(null);
-                      setLikesModalOpen(false);
-                    }}
-                    className="p-2 bg-gray-700 rounded-xl hover:bg-gray-600 transition-colors duration-300"
-                  >
-                    <X className="w-5 h-5 text-gray-400" />
-                  </button>
-                </div>
-              </div>
-
-              <div className="overflow-y-auto max-h-[60vh] p-4">
-                {likesList.map((like) => (
-                  <div
-                    key={like._id}
-                    className="flex items-center gap-3 p-3 hover:bg-gray-700 rounded-2xl transition-colors duration-300 group"
-                  >
-                    <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-gray-600 group-hover:border-cyan-400 transition-colors duration-300">
-                      <img
-                        src={like.user?.profileImageURL || defaultAvatar}
-                        className="w-full h-full object-cover"
-                        alt={like.user?.username}
-                        draggable={false}
-                      />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold text-gray-100 group-hover:text-cyan-400 transition-colors duration-300 truncate">
-                          @{like.user?.username}
-                        </span>
-                        {like.user?.isVerified && (
-                          <img
-                            src={verifiedIcon}
-                            alt="Verified"
-                            className="w-4 h-4"
-                            draggable={false}
-                          />
-                        )}
-                      </div>
-                      {like.user?.name && (
-                        <p className="text-gray-400 text-sm truncate">
-                          {like.user.name}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
+        {/* Comments Modal */}
         {commentsModalOpen && (
-          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div className="bg-gray-800 border border-gray-700 rounded-3xl shadow-2xl w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
-              <div className="p-6 border-b border-gray-700">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-xl font-semibold text-gray-100 flex items-center gap-2">
-                    <MessageCircle className="w-5 h-5 text-blue-500" />
-                    Comments
-                  </h3>
-                  <button
-                    onClick={() => {
-                      setSelectedPost(null);
-                      setCommentsModalOpen(false);
-                    }}
-                    className="p-2 bg-gray-700 rounded-xl hover:bg-gray-600 transition-colors duration-300"
-                  >
-                    <X className="w-5 h-5 text-gray-400" />
-                  </button>
-                </div>
-              </div>
+          <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-[#172133] border border-[#0bb] rounded-3xl shadow-neonBtn w-full max-w-lg max-h-[85vh] flex flex-col overflow-hidden">
+              {/* Header */}
+              <header className="flex justify-between items-center p-4 border-b border-[#0bb] text-[#0bb] font-semibold text-lg">
+                <span>💬 Comments ({comments.length})</span>
+                <button
+                  aria-label="Close comments"
+                  className="hover:text-[#14639d] transition"
+                  onClick={() => {
+                    setCommentsModalOpen(false);
+                    setSelectedPost(null);
+                  }}
+                >
+                  ✕
+                </button>
+              </header>
 
-              <div className="p-4 border-b border-gray-700">
-                <div className="flex gap-3">
-                  <input
-                    ref={commentInputRef}
-                    type="text"
-                    className="flex-1 px-4 py-3 bg-gray-700 border-2 border-gray-600 rounded-2xl text-gray-100 placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-4 focus:ring-cyan-500/20 transition-all duration-300"
-                    placeholder="Add a comment..."
-                    value={newComment}
-                    onChange={(e) => setNewComment(e.target.value)}
-                  />
-                  <button
-                    onClick={handleAddComment}
-                    className="px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-semibold rounded-2xl transition-all duration-300 hover:from-cyan-400 hover:to-blue-500 hover:scale-105 active:scale-95 flex items-center gap-2"
-                  >
-                    <Send className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
+              {/* Add Comment Input */}
+              <footer className="p-4 border-b border-[#0bb] flex gap-2 bg-[#172133]">
+                <input
+                  ref={commentInputRef}
+                  type="text"
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleAddComment()}
+                  placeholder="Add a comment..."
+                  className="flex-1 rounded-xl py-2 px-4 bg-[#0bb]/10 border border-[#0bb]/50 text-[#0bb] placeholder-[#0bb]/70 focus:outline-none focus:ring-2 focus:ring-[#0bb] transition"
+                />
+                <button
+                  onClick={handleAddComment}
+                  disabled={!newComment.trim()}
+                  className="rounded-xl bg-[#0bb] hover:bg-[#14639d] px-4 py-2 text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition"
+                >
+                  <Send className="w-5 h-5" />
+                </button>
+              </footer>
 
-              <div className="flex-1 overflow-y-auto p-4">
+              {/* Comments List */}
+              <main className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin scrollbar-thumb-[#0bb]/50 scrollbar-track-transparent text-[#5599bb]">
                 {comments.length === 0 ? (
-                  <div className="text-center py-8">
-                    <MessageCircle className="w-12 h-12 text-gray-500 mx-auto mb-3" />
-                    <p className="text-gray-400">
-                      No comments yet. Be the first to comment!
-                    </p>
+                  <div className="text-center italic">
+                    No comments yet. Be the first!
                   </div>
                 ) : (
-                  <div className="space-y-4">
-                    {comments.map((comment) => (
-                      <div
-                        key={comment._id}
-                        className="flex items-start gap-3 group"
-                      >
-                        <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-gray-600 group-hover:border-cyan-400 transition-colors duration-300">
-                          <img
-                            src={comment.user?.profileImageURL || defaultAvatar}
-                            className="w-full h-full object-cover"
-                            alt="Profile"
-                            draggable={false}
-                          />
+                  comments.map((comment) => (
+                    <div key={comment._id} className="flex gap-4 items-start">
+                      <img
+                        src={comment.user?.profileImageURL || defaultAvatar}
+                        alt={comment.user?.username ?? "User"}
+                        draggable={false}
+                        className="rounded-full w-10 h-10 object-cover border-2 border-[#0bb] flex-shrink-0"
+                      />
+                      <div>
+                        <div className="flex items-center gap-1 mb-1">
+                          <a
+                            href={`/user/${comment.user?.username}`}
+                            className="text-[#0bb] font-semibold hover:text-[#14639d] transition"
+                          >
+                            @{comment.user?.username}
+                          </a>
+                          {comment.user?.isVerified && (
+                            <img
+                              src={verifiedIcon}
+                              alt="Verified"
+                              className="w-4 h-4"
+                              draggable={false}
+                            />
+                          )}
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="font-semibold text-gray-100 group-hover:text-cyan-400 transition-colors duration-300">
-                              @{comment.user?.username}
-                            </span>
-                            {comment.user?.isVerified && (
-                              <img
-                                src={verifiedIcon}
-                                alt="Verified"
-                                className="w-4 h-4"
-                                draggable={false}
-                              />
-                            )}
-                          </div>
-                          <p className="text-gray-300 leading-relaxed break-words">
-                            {comment.text}
-                          </p>
-                        </div>
+                        <p className="text-left leading-relaxed whitespace-pre-wrap">
+                          {comment.text}
+                        </p>
                       </div>
-                    ))}
-                  </div>
+                    </div>
+                  ))
                 )}
-              </div>
+              </main>
             </div>
           </div>
         )}
       </div>
 
       {toast && (
-        <div className="fixed top-6 right-6 z-50 animate-in slide-in-from-top-2 duration-300">
-          <div
-            className={`px-6 py-4 rounded-2xl shadow-2xl border backdrop-blur-md ${
-              toast.type === "success"
-                ? "bg-green-800/90 border-green-600 text-green-100"
-                : "bg-red-800/90 border-red-600 text-red-100"
-            }`}
-          >
-            <div className="flex items-center gap-3">
-              <div
-                className={`w-2 h-2 rounded-full ${
-                  toast.type === "success" ? "bg-green-400" : "bg-red-400"
-                } animate-pulse`}
-              ></div>
-              <span className="font-medium">{toast.message}</span>
-            </div>
+        <div
+          className={`fixed top-4 right-4 z-50 px-6 py-4 rounded-3xl shadow-subtleNeon backdrop-blur-md max-w-xs sm:max-w-sm ${
+            toast.type === "success"
+              ? "bg-green-900/90 border border-green-700 text-green-200"
+              : "bg-red-900/90 border border-red-700 text-red-200"
+          }`}
+        >
+          <div className="flex items-center gap-3">
+            <div
+              className={`w-3 h-3 rounded-full ${
+                toast.type === "success" ? "bg-green-400" : "bg-red-400"
+              } animate-pulse`}
+            />
+            <span className="font-medium">{toast.message}</span>
           </div>
         </div>
       )}
@@ -970,6 +770,18 @@ function UserProfile() {
             opacity: 1;
             transform: translateY(0);
           }
+        }
+        .shadow-subtleNeon {
+          box-shadow: 0 0 3px #0bb6, 0 0 8px #0bb5a;
+        }
+        .shadow-neonBtn {
+          box-shadow: 0 0 4px #0bb8, 0 0 10px #0bb8a;
+        }
+        .scrollbar-thin {
+          scrollbar-width: thin;
+        }
+        .scrollbar-thumb-[#0bb]::-webkit-scrollbar-thumb {
+          background-color: #0bb;
         }
       `}</style>
     </div>

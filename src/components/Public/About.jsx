@@ -54,7 +54,7 @@ function About() {
     {
       title: "Interactions",
       description:
-        "Like and comment on posts. Real-time updates for likes and comments. View total likes, comments, and views on a post.",
+        "Comment on posts. Real-time updates for  comments. View total comments, and views on a post.",
       icon: Heart,
       color: "from-pink-500 to-red-600",
     },
@@ -68,14 +68,14 @@ function About() {
     {
       title: "Notifications",
       description:
-        "Real-time notifications for likes, comments, follows, and reports. Mark notifications as read. Notification badges.",
+        "Real-time notifications for comments, follows, and reports. Mark notifications as read. Notification badges.",
       icon: Bell,
       color: "from-yellow-500 to-orange-600",
     },
     {
       title: "Activity Log",
       description:
-        "Track personal actions: posts, likes, comments, reports, and account registration. Activities displayed chronologically.",
+        "Track personal actions: posts, comments, reports, and account registration. Activities displayed chronologically.",
       icon: Activity,
       color: "from-indigo-500 to-purple-600",
     },
